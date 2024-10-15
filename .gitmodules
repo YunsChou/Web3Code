@@ -4,3 +4,6 @@
 [submodule "ttproj/lib/solmate"]
 	path = ttproj/lib/solmate
 	url = https://github.com/transmissions11/solmate
+[submodule "ttproject/lib/forge-std"]
+	path = ttproject/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
