@@ -72,27 +72,37 @@ contract BaseERC20 {
     }
 
     // 新增扩展方法：调用完转账，触发callBack
-    function transferWithCallback(address recipient, uint256 amount) public {
-        if (!transfer(recipient, amount)) {
-            revert ERC20InvalidSpender(recipient);
+    function transferWithCallback(address to, uint256 amount) public {
+        if (!transfer(to, amount)) {
+            revert ERC20InvalidSpender(to);
         }
 
-        _checkOnERC20Received(msg.sender, recipient, amount, "");
+        _checkOnERC20Received(msg.sender, to, amount, "");
     }
+    /**
+     * 往合约转账 + callback记录转账{地址:额度} = 给合约授权额度 + （从授权额度）往合约存款记录{地址:额度}
+     * 一步到位，省去了授权步骤，且更加安全（无授权额度由他人控制）
+     *
+     * _checkOnERC20Received参数解析：from（存款者）、to（收款者）、value（额度）、...
+     * to（收款者）用来调用触发callback方法、from和value用来记录{地址:额度}
+     * 可以直接用收款者的withdraw进行提款
+     *
+     * 如果没有先授权额度approve，无法直接使用收款者的deposit进行存款
+     */
 
     // 检查IBERC20Receiver方法是否实现（如果实现触发callback）
-    function _checkOnERC20Received(address operator, address spender, uint256 value, bytes memory data) internal {
-        if (spender.code.length == 0) {
-            revert ERC20InvalidSpender(spender);
+    function _checkOnERC20Received(address from, address to, uint256 value, bytes memory data) internal {
+        if (to.code.length == 0) {
+            revert ERC20InvalidSpender(to);
         }
 
-        try IBERC20Receiver(spender).tokensReceived(msg.sender, operator, value, data) returns (bytes4 retval) {
+        try IBERC20Receiver(to).tokensReceived(msg.sender, from, value, data) returns (bytes4 retval) {
             if (retval != IBERC20Receiver.tokensReceived.selector) {
-                revert ERC20InvalidSpender(spender);
+                revert ERC20InvalidSpender(to);
             }
         } catch (bytes memory reason) {
             if (reason.length == 0) {
-                revert ERC20InvalidSpender(spender);
+                revert ERC20InvalidSpender(to);
             } else {
                 assembly {
                     revert(add(32, reason), mload(reason))
