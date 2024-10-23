@@ -74,12 +74,13 @@ contract NFTMarket is IERC20Receiver {
         external
         returns (bytes4)
     {
-        // require(from == address(this), "Only the specified token can call this");
-
         (uint256 listIndex) = abi.decode(data, (uint256));
         NFTOrder memory order = _nftList[listIndex]; // 获取订单信息
         require(amount >= order.payPrice, "receive cash amount is error");
         ERC20Token payToken = ERC20Token(order.payToken);
+        // 限定调用者 token 类型
+        require(operator == address(payToken), "Only the specified token can call this");
+
         NFToken nft = NFToken(order.nftToken);
         // 交货：平台收到钱后，将钱转给卖家，将nft转给买家
         payToken.transfer(order.owner, order.payPrice); // 给钱
