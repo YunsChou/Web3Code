@@ -10,3 +10,6 @@
 [submodule "D8-Foundry、TestBank/BankTest/lib/forge-std"]
 	path = D8-Foundry、TestBank/BankTest/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "D13-Web3Signer/BankTest/lib/forge-std"]
+	path = D13-Web3Signer/BankTest/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
