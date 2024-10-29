@@ -17,13 +17,7 @@ contract CounterTest is Test {
         assertEq(counter.number(), 1);
     }
 
-    /**
-     * forge-config: default.fuzz.runs = 1024
-     * forge-config: default.fuzz.max-test-rejects = 500
-     */
     function testFuzz_SetNumber(uint256 x) public {
-        vm.assume(x > 31600);
-
         counter.setNumber(x);
         assertEq(counter.number(), x);
     }
