@@ -39,5 +39,3 @@ async function watchUSDTTransfers() {
     });
 
 }
-
-watchUSDTTransfers();

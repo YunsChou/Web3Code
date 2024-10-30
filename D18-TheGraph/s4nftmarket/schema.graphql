@@ -1,0 +1,23 @@
+type NFTList @entity(immutable: true) {
+  id: Bytes!
+  seller: Bytes! # address
+  nftAddress: Bytes! # address
+  nftTokenId: BigInt! # uint256
+  payToken: Bytes! # address
+  payPrice: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type NFTSold @entity(immutable: true) {
+  id: Bytes!
+  buyer: Bytes! # address
+  nftAddress: Bytes! # address
+  nftTokenId: BigInt! # uint256
+  payToken: Bytes! # address
+  payPrice: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

@@ -43,3 +43,9 @@
 [submodule "D16-Create2~Permit2/BankPermit2/lib/forge-std"]
 	path = D16-Create2~Permit2/BankPermit2/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "D18-TheGraph/NFTMarket/lib/forge-std"]
+	path = D18-TheGraph/NFTMarket/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D18-TheGraph/NFTMarket/lib/openzeppelin-contracts"]
+	path = D18-TheGraph/NFTMarket/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
