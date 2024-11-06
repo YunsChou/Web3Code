@@ -52,3 +52,33 @@
 [submodule "D16-Create2~Permit2/BankPermit2/lib/openzeppelin-contracts"]
 	path = D16-Create2~Permit2/BankPermit2/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "D19-SignNFT/NFTMarket/lib/forge-std"]
+	path = D19-SignNFT/NFTMarket/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D19-SignNFT/NFTMarket/lib/openzeppelin-contracts"]
+	path = D19-SignNFT/NFTMarket/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "D20-IDO~Stake/IDOToken/lib/forge-std"]
+	path = D20-IDO~Stake/IDOToken/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D20-IDO~Stake/StakeToken/lib/forge-std"]
+	path = D20-IDO~Stake/StakeToken/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D20-IDO~Stake/IDOToken/lib/openzeppelin-contracts"]
+	path = D20-IDO~Stake/IDOToken/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "D20-IDO~Stake/StakeToken/lib/openzeppelin-contracts"]
+	path = D20-IDO~Stake/StakeToken/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "D22-SlotLayout/SlotOwner/lib/forge-std"]
+	path = D22-SlotLayout/SlotOwner/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D22-SlotLayout/CastGetStorage/lib/forge-std"]
+	path = D22-SlotLayout/CastGetStorage/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D23-UpgradeProxy/NFTMarket/lib/forge-std"]
+	path = D23-UpgradeProxy/NFTMarket/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D23-UpgradeProxy/NFTMarket/lib/openzeppelin-contracts"]
+	path = D23-UpgradeProxy/NFTMarket/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts

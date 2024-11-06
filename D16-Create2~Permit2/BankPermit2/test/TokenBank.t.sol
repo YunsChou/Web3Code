@@ -39,7 +39,7 @@ contract TokenBankTest is Test {
         vm.prank(alice);
         mockToken.approve(permit2Contract, type(uint256).max);
 
-        // 用Permit2中的approve会出问题
+        // 【！！！】用Permit2中的approve会出问题
         // IPermit2(permit2Contract).approve(
         //     address(mockToken), permit2Contract, type(uint160).max, uint48(block.timestamp + 10 hours)
         // );
@@ -73,8 +73,7 @@ contract TokenBankTest is Test {
         require(aliceBalance == dealTokenAmount - depositAmount, "alice balance error");
     }
 
-    // getPermitTransferSignature
-
+    // 签名方式在Permit中的getPermitTransferSignature
     function signToPermit2(IPermit2.PermitTransferFrom memory permit) public view returns (bytes memory signature) {
         bytes32 domainSeparator = IPermit2(permit2Contract).DOMAIN_SEPARATOR();
         console.log("-->> domainSeparator: ", bytes32ToString(domainSeparator));

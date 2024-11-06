@@ -24,6 +24,7 @@ contract TokenBank {
         addressAmount[msg.sender] -= amount;
     }
 
+    
     function permitDeposit(
         address owner,
         address spender,
