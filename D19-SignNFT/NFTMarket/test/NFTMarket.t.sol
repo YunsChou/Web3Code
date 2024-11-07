@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "../src/NFTMarket.sol";
-import "../src/NFTToken.sol";
+import {Test, console} from "forge-std/Test.sol";
 import "../src/ERC20Token.sol";
-import "forge-std/Test.sol";
+import "../src/NFTToken.sol";
+import "../src/NFTMarket.sol";
 
 contract NFTMarketTest is Test {
     NFTMarket public nftMarket;
     NFTToken public nftToken;
     ERC20Token public erc20Token;
-    address public seller = makeAddr("alice");
+
+    uint256 public privateKey;
+    address public seller;
     address public buyer = makeAddr("bob");
 
     function setUp() public {
         nftMarket = new NFTMarket();
         nftToken = new NFTToken();
         erc20Token = new ERC20Token();
+        (seller, privateKey) = makeAddrAndKey("alice");
 
-        erc20Token.mint(buyer, 1000);
         nftToken.mint(seller, 1, "uri");
+        erc20Token.mint(buyer, 1000);
     }
 
     function test_listNFT() public {
@@ -74,18 +77,34 @@ contract NFTMarketTest is Test {
         vm.stopPrank();
     }
 
-    function test_onTransferReceived() external {
-        // 授权挂单
+    function test_permitBuyNFT() public {
+        // -------------------seller在中心化平台上填写，并保存到market中心化服务器------------------------
+        uint256 time = block.timestamp + 1 hours;
+        // 签名消息
+        bytes32 digest = nftToken.getPermitDigest(
+            address(seller), address(nftMarket), address(nftToken), 1, address(erc20Token), 100, time
+        );
+        // 使用私钥签名, 获取 rsv
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        // -------------------------------------------
+
+        // 上架
         vm.startPrank(seller);
+        // 授权给市场
         nftToken.approve(address(nftMarket), 1);
-        nftMarket.listNFT(address(nftToken), 1, address(erc20Token), 100);
+        // 挂单上架
+        // nftMarket.listNFT(address(nftToken), 1, address(erc20Token), 100);
+        // ！！！在中心化平台上架
         vm.stopPrank();
 
         // 购买
         vm.startPrank(buyer);
-        bytes memory data = abi.encode(0);
-        console.logBytes(data);
-        erc20Token.transferAndCall(address(nftMarket), 100, data);
+        // 授权给市场
+        erc20Token.approve(address(nftMarket), 100);
+        // 拿到签名信息购买
+        nftMarket.permitBuyNFT(
+            address(seller), address(nftMarket), address(nftToken), 1, address(erc20Token), 100, time, v, r, s
+        );
         vm.stopPrank();
 
         // 检查购买结果
@@ -93,4 +112,30 @@ contract NFTMarketTest is Test {
         assertEq(erc20Token.balanceOf(buyer), 900);
         assertEq(erc20Token.balanceOf(seller), 100);
     }
+
+    /* 自己构建的签名信息，和使用 ERC721 构建的签名信息不一致
+    function getCustomPermitDigest() public view {
+        uint256 time = block.timestamp + 1 hours;
+        // 签名消息
+        bytes32 permit_hash = keccak256(
+            "Permit(address owner,address spender,address nftAddress,uint256 nftTokenId,address payToken,uint256 payPrice,uint256 deadline)"
+        );
+        bytes32 structHash = keccak256(
+            abi.encode(
+                permit_hash, address(seller), address(nftMarket), address(nftToken), 1, address(erc20Token), 100, time
+            )
+        );
+
+        bytes32 domain_hash =
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                domain_hash, keccak256(bytes("EIP712Storage")), keccak256(bytes("1")), block.chainid, address(this)
+            )
+        );
+        bytes32 msgHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        console.logBytes32(msgHash);
+    }
+    */
 }

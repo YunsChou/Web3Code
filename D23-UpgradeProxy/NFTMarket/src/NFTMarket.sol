@@ -75,10 +75,10 @@ contract NFTMarket is IERC1363Receiver {
         require(value >= order.payPrice, "receive cash amount is error");
         ERC20Token payToken = ERC20Token(order.payToken);
         // 限定调用者 token 类型
-        require(msg.sender == address(payToken), "Only the specified token can call this");
         console.log("-->> operator", operator);
         console.log("-->> from", from);
         console.log("-->> payToken", address(payToken));
+        require(operator == address(payToken), "Only the specified token can call this");
 
         NFTToken nft = NFTToken(order.nftToken);
         // 交货：平台收到钱后，将钱转给卖家，将nft转给买家
