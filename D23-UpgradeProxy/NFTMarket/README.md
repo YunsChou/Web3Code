@@ -1,5 +1,5 @@
 透明代理合约地址：https://sepolia.etherscan.io/address/0x0d960351a9722c135078057e4298a29702c449f3#code
-NFTMarktV1合约地址：https://sepolia.etherscan.io/address/0x32D488bC7C63efA71DcF8c4851a1356Ba895f757#code
+NFTMarketV1合约地址：https://sepolia.etherscan.io/address/0x32D488bC7C63efA71DcF8c4851a1356Ba895f757#code
 NFTMarketV2合约地址：https://sepolia.etherscan.io/address/0x2e4C3Aa020777C51f748e30065FCF72e8959Ec2C#code
 
 ## Foundry
