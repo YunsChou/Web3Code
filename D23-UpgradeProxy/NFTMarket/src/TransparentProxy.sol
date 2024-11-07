@@ -10,11 +10,10 @@ contract TransparentProxy {
         implementation = _implementation;
     }
 
-    receive() external payable {
-        revert();
-    }
+    receive() external payable {}
 
     fallback() external payable {
+        require(msg.sender != admin, "admin is forbid");
         (bool succ,) = implementation.delegatecall(msg.data);
         require(succ, "delegatecall is fail");
     }
