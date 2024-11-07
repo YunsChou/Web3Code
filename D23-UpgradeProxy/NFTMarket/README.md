@@ -1,3 +1,7 @@
+透明代理合约地址：https://sepolia.etherscan.io/address/0x9a8d1db5cecc0c84728f9d288830d3e72e2d47ff#code
+NFTMarktV1合约地址：https://sepolia.etherscan.io/address/0xADb8ab067adCA649b9862dd223cC5048D92AB4af#code
+NFTMarketV2合约地址：https://sepolia.etherscan.io/address/0x520bb8ebbc18d6188b5e64298c03fa4ea990ffa9#code
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
