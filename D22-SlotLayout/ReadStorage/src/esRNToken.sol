@@ -13,6 +13,11 @@ contract esRNToken {
     constructor() {
         for (uint256 i = 0; i < 11; i++) {
             _locks.push(LockInfo(address(uint160(i + 1)), uint64(block.timestamp * 2 - i), 1e18 * (i + 1)));
+            // _locks.push(LockInfo(address(uint160(i + 1)), uint64(block.timestamp + i), 1e18 * (i + 1)));
         }
+    }
+
+    function getLocks() external view returns (LockInfo[] memory) {
+        return _locks;
     }
 }

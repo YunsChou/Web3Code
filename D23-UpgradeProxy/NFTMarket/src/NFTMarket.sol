@@ -12,6 +12,14 @@ contract NFTMarket is IERC1363Receiver {
     uint256 public nftListIdx;
     mapping(uint256 => NFTOrder) public nftLists;
 
+    uint256 public nftListIdx2;
+
+    function ihit() external {
+        // nftListIdx = 1; nftListIdx;
+
+        nftListIdx2 = 33;
+    }
+
     event NFTList(
         address indexed seller,
         address indexed nftAddress,
