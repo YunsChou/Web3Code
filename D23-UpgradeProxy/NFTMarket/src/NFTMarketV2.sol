@@ -5,7 +5,7 @@ import "./NFTToken.sol";
 import "./ERC20Token.sol";
 import {IERC1363Receiver} from "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 
-contract NFTMarket is IERC1363Receiver {
+contract NFTMarketV2 is IERC1363Receiver {
     address public implementation;
     address public admin;
 
@@ -88,6 +88,33 @@ contract NFTMarket is IERC1363Receiver {
 
         // 删除订单记录
         delete nftLists[listIndex];
-        return NFTMarket.onTransferReceived.selector;
+        return NFTMarketV2.onTransferReceived.selector;
+    }
+
+    function permitBuyNFT(
+        address owner,
+        address spender,
+        address nftAddress,
+        uint256 nftTokenId,
+        address payToken,
+        uint256 payPrice,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
+        require(spender == address(this), "spender is no the market contract");
+        require(block.timestamp < deadline, "dealine is error");
+        // 生成 签名消息
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(owner, spender, nftAddress, nftTokenId, payToken, payPrice, deadline));
+        bytes32 ethSignMsgHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", msgHash));
+        // 通过签名消息和签名结果(rsv)恢复签名地址
+        address signer = ecrecover(ethSignMsgHash, v, r, s);
+        // 如果签名地址和目标地址一致，通过校验
+        require(signer == owner, "nft permit sign is owner");
+        // 交钱、交货
+        IERC20(payToken).transferFrom(msg.sender, owner, payPrice);
+        IERC721(nftAddress).transferFrom(owner, msg.sender, nftTokenId);
     }
 }

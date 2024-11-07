@@ -82,3 +82,9 @@
 [submodule "D23-UpgradeProxy/NFTMarket/lib/openzeppelin-contracts"]
 	path = D23-UpgradeProxy/NFTMarket/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "D23-UpgradeProxy/NFTMarket/lib/openzeppelin-contracts-upgradeable"]
+	path = D23-UpgradeProxy/NFTMarket/lib/openzeppelin-contracts-upgradeable
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
+[submodule "D23-UpgradeProxy/NFTMarket/lib/openzeppelin-foundry-upgrades"]
+	path = D23-UpgradeProxy/NFTMarket/lib/openzeppelin-foundry-upgrades
+	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
