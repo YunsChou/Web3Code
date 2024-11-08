@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./esRNTToken.sol";
+import "./esRNToken.sol";
 import "./StakeExchange.sol";
 
 import {console} from "forge-std/Test.sol";
@@ -15,7 +15,7 @@ struct StakeInfoStruct {
 
 contract StakePool {
     address public stakeToken;
-    esRNTToken public profitToken;
+    esRNToken public profitToken;
     StakeExchange public stateExchange;
 
     uint256 public profitPerday;
@@ -25,7 +25,7 @@ contract StakePool {
 
     constructor(address _stakeToken, uint256 _profitPerday) {
         stakeToken = _stakeToken;
-        profitToken = new esRNTToken();
+        profitToken = new esRNToken();
         stateExchange = new StakeExchange(stakeToken);
         profitPerday = _profitPerday;
         profitPerSeconds = profitPerday / (24 * 60 * 60); // 这里相除结果为小数强转为整数后，结果为0

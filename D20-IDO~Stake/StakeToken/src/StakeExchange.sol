@@ -3,7 +3,7 @@
 pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./esRNTToken.sol";
+import "./esRNToken.sol";
 
 struct ExchangeInfoStruct {
     bool isExchanged;
@@ -14,12 +14,12 @@ struct ExchangeInfoStruct {
 }
 
 contract StakeExchange {
-    esRNTToken public profitToken;
+    esRNToken public profitToken;
     address public exchangeToken;
     mapping(address => ExchangeInfoStruct[]) public exchanges;
 
     constructor(address _exchangeToken) {
-        profitToken = new esRNTToken();
+        profitToken = new esRNToken();
         exchangeToken = _exchangeToken;
     }
 

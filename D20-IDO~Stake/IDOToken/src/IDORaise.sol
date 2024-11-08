@@ -1,32 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "./RNTToken.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract IDORaise {
     address public owner;
-    RNTToken public rntToken;
+    IERC20 public rntToken;
 
-    // 筹集资金分配
-    uint256 constant ratioTotal = 100;
-    uint256 public ratioCount;
-    mapping(address => uint256) partyRatio;
-    // 筹集eth
+    // 募集进度
     bool public isEnd;
     uint256 public totalETH;
-    mapping(address => uint256) balances;
+    mapping(address => uint256) public balances;
+    uint256 public endTime;
 
     // 预售配置
-    uint256 constant preRNTPrice = 0.0001 ether; // 预售价格
-    uint256 constant preRNTTotal = 100 * 10000; // 预售RNT数量
-    uint256 constant minETHAmount = 0.01 ether; // 最低买入
-    uint256 constant maxETHAmount = 0.1 ether; // 最高买入
+    uint256 constant preRNTTotal = 1000000 * 1e18; // 预售RNT数量
     uint256 constant minETHTarget = 100 ether; // 最低募集目标
     uint256 constant maxETHTarge = 200 ether; // 最高募集目标
+    uint256 constant preRNTPrice = preRNTTotal / minETHTarget; // 预售价格
 
-    constructor() {
+    uint256 constant minETHAmount = 0.01 ether; // 最低买入
+    uint256 constant maxETHAmount = 0.1 ether; // 最高买入
+
+    constructor(address _idoToken) {
         owner = msg.sender;
-        rntToken = new RNTToken();
+        rntToken = IERC20(_idoToken);
+        endTime = block.timestamp + 10 days;
     }
 
     receive() external payable {
@@ -35,56 +34,82 @@ contract IDORaise {
 
     // 记录预售款
     function preSale() public payable onlyActive singleAmountLimit(msg.value) {
-        balances[msg.sender] += msg.value;
+        balances[msg.sender] += msg.value; // 有用户多次申购
 
         totalETH += msg.value;
-
         // 筹集到最高额度，募集结束
         if (totalETH >= 200 ether) {
             isEnd = true;
         }
     }
 
-    // 项目方设置各方提取比例
-    function withdrawalRatio(address spender, uint256 amount) external onlyOwner {
-        require(ratioCount < ratioTotal, "ratio percent error");
-        ratioCount += amount;
-        require(ratioCount > ratioTotal, "ratio percent exceed");
-        partyRatio[spender] = amount;
-    }
-
-    // 主动触发结束（项目方手动，或募集时间截止）
+    // 主动触发结束（项目方手动结束）
     function raiseFinish() external onlyOwner {
         isEnd = true;
     }
 
-    // 预售成功情况下，给用户转币
+    // 预售成功情况下，给用户转币（用户主动来领币）
     function claim() external onlySuccess {
-        uint256 perShare = preRNTTotal / totalETH;
+        uint256 realPrice = realRNTPrice();
         require(balances[msg.sender] > 0, "your balances is 0");
-        uint256 userShare = perShare * balances[msg.sender];
-
-        rntToken.transfer(msg.sender, userShare);
+        uint256 userAmount = balances[msg.sender] / realPrice;
+        balances[msg.sender] = 0;
+        rntToken.transfer(msg.sender, userAmount);
     }
 
-    // 预售失败情况下，给用户退款（用户自己来领取退款？）
+    // 预售失败情况下，给用户退款（用户自己来领取退款）
     function refund() external onlyFail {
-        (bool succ,) = payable(msg.sender).call{value: balances[msg.sender]}("");
-        require(succ, "refund fail");
+        uint256 eths = balances[msg.sender];
+        if (eths > 0) {
+            balances[msg.sender] = 0;
+            // 退款 失败 【因为balances是动态变化的，执行transfer会失败】
+            // payable(msg.sender).transfer(balances[msg.sender]);
+
+            // 退款 成功
+            (bool succ,) = payable(msg.sender).call{value: eths}("");
+            require(succ, "refund fail");
+        }
     }
 
-    // 预售成功，项目方、开发团队各自提款
-    function withdraw() external onlySuccess {
-        uint256 ratio = partyRatio[msg.sender];
-        require(ratio > 0, "no withdrawal share");
-        uint256 ratioShare = ratio / 100 * totalETH;
-        (bool succ,) = payable(msg.sender).call{value: ratioShare}("");
-        require(succ, "withdraw fail");
+    // 项目方提取eth
+    function withdraw() external onlySuccess onlyOwner {
+        // 此时totalETH 和 address(this).banlance 的值应该相等
+        uint256 eths = address(this).balance;
+        // 提取
+        (bool succ,) = payable(owner).call{value: eths}("");
+        require(succ, "admin withdraw fail");
+    }
+
+    // 预售成功，rnt实际价格
+    function realRNTPrice() public view returns (uint256) {
+        return preRNTTotal / totalETH;
+    }
+
+    // 预售成功，计算认购eth数量，实际领rnt数量
+    function realClaimAmount(uint256 eths) public view returns (uint256) {
+        return eths / realRNTPrice();
+    }
+
+    // 预售成功情况下，用户可以领到的rnt数量
+    function estClaimAmount(address user) public view returns (uint256) {
+        return balances[user] / estRNTPrice(balances[user]);
     }
 
     // 预估rnt发行价格（eth计价）
-    function estAmount(uint256 eths) external pure returns (uint256) {
-        return preRNTTotal * eths / (minETHTarget + eths);
+    function estRNTPrice(uint256 eths) public view returns (uint256) {
+        // 预估价格 = 预售价格 * 当前募集的eth / (当前募集的eth + 新增的eth)
+        return preRNTTotal * eths / (totalETH + eths);
+    }
+
+    function checkIsEnd() public returns (bool) {
+        if (isEnd) {
+            return true;
+        }
+        if (block.timestamp > endTime) {
+            isEnd = true;
+            return true;
+        }
+        return false;
     }
 
     modifier onlyOwner() {
@@ -99,17 +124,17 @@ contract IDORaise {
     }
 
     modifier onlySuccess() {
-        require(isEnd && totalETH >= 100 ether, "not onlySuccess");
+        require(checkIsEnd() && totalETH >= 100 ether, "not onlySuccess");
         _;
     }
 
     modifier onlyFail() {
-        require(isEnd && totalETH < 100 ether, "not onlyFail");
+        require(checkIsEnd() && totalETH < 100 ether, "not onlyFail");
         _;
     }
 
     modifier onlyActive() {
-        require(!isEnd && totalETH < 100 ether, "not onlyActive");
+        require(!checkIsEnd() && totalETH < 200 ether, "not onlyActive");
         _;
     }
 }
