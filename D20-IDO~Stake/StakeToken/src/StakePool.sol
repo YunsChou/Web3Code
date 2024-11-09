@@ -3,7 +3,6 @@ pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./esRNToken.sol";
-import "./StakeExchange.sol";
 
 import {console} from "forge-std/Test.sol";
 
@@ -16,19 +15,21 @@ struct StakeInfoStruct {
 contract StakePool {
     address public stakeToken;
     esRNToken public profitToken;
-    StakeExchange public stateExchange;
 
-    uint256 public profitPerday;
-    uint256 public profitPerSeconds;
+    uint256 public profitRatePerday; // 1 esRNT/day
 
-    mapping(address => StakeInfoStruct) public stakePools;
+    mapping(address => StakeInfoStruct) public stakeInfos;
 
-    constructor(address _stakeToken, uint256 _profitPerday) {
+    constructor(address _stakeToken, address _profitToken, uint256 _profitRatePerday) {
         stakeToken = _stakeToken;
-        profitToken = new esRNToken();
-        stateExchange = new StakeExchange(stakeToken);
-        profitPerday = _profitPerday;
-        profitPerSeconds = profitPerday / (24 * 60 * 60); // 这里相除结果为小数强转为整数后，结果为0
+        profitToken = esRNToken(_profitToken);
+        profitRatePerday = _profitRatePerday;
+    }
+
+    modifier hadStaked() {
+        StakeInfoStruct memory stakeInfo = stakeInfos[msg.sender];
+        require(stakeInfo.stakeNumber > 0, "not stake");
+        _;
     }
 
     // 质押
@@ -36,70 +37,73 @@ contract StakePool {
         console.log("-->> time-stake:", block.timestamp);
         require(IERC20(stakeToken).allowance(msg.sender, address(this)) >= amount, "allowance is less stake amount");
         require(IERC20(stakeToken).balanceOf(msg.sender) >= amount, "balance is less stake amount");
+        // user将质押的RNT转入StakePool合约
         IERC20(stakeToken).transferFrom(msg.sender, address(this), amount);
-        // 判断是否已有质押
-        StakeInfoStruct memory stakeInfo = stakePools[msg.sender];
-        if (stakeInfo.stakeNumber > 0) {
-            // 有正在质押的单子【更新质押】
-            console.log("-->> stakingIncome: ", stakingIncome(stakeInfo));
-            stakeInfo.unClaimNumber += stakingIncome(stakeInfo); // 将实时收益换算到待领取的esRNT
-            stakeInfo.stakeNumber += amount; // 质押RNT累加
-            stakeInfo.stakeStartTime = block.timestamp;
-        } else {
-            // 没有正在质押的单子
-            stakeInfo = StakeInfoStruct({stakeNumber: amount, stakeStartTime: block.timestamp, unClaimNumber: 0});
-        }
+        // 更新质押收益
+        updatestakingIncome(msg.sender);
+        // StakeInfoStruct memory stakeInfo = stakeInfos[msg.sender];
+        // stakeInfo.stakeNumber += amount; // 质押RNT累加
 
-        stakePools[msg.sender] = stakeInfo;
+        stakeInfos[msg.sender].stakeNumber += amount;
     }
 
-    // 领取质押代币
-    function onlyClaimTokens() external hadStaked {
-        claimWithUnStake(false);
+    // 解除质押
+    function unstake(uint256 amount) external hadStaked {
+        // StakeInfoStruct memory stakeInfo = stakeInfos[msg.sender];
+        require(stakeInfos[msg.sender].stakeNumber >= amount, "stakeNumber is not enougth");
+
+        stakeInfos[msg.sender].stakeNumber -= amount;
+        // 将StakePool的RNT转给user
+        IERC20(stakeToken).transfer(msg.sender, amount);
     }
 
-    // 质押赎回：
-    function unState() external hadStaked {
-        claimWithUnStake(true);
-    }
-
-    function claimWithUnStake(bool isUnState) public {
-        StakeInfoStruct memory stakeInfo = stakePools[msg.sender];
-
-        // 计算收益
-        uint256 tokenAmount = stakeInfo.unClaimNumber + stakingIncome(stakeInfo);
-        // 提取收益代币到用户账户，并生成一个兑换订单
-        profitToken.mint(msg.sender, tokenAmount);
-        stateExchange.createExchangeOrder(msg.sender, tokenAmount);
-
-        if (isUnState) {
-            // 清除该用户质押
-            // 提取质押代币到用户账户
-            IERC20(stakeToken).transfer(msg.sender, stakeInfo.stakeNumber);
-            stakeInfo.stakeNumber = 0;
-        }
-        // 修改利润和最新质押时间
-        stakeInfo.stakeStartTime = block.timestamp;
-        stakeInfo.unClaimNumber = 0;
-        stakePools[msg.sender] = stakeInfo;
+    function claimTokens() external {
+        updatestakingIncome(msg.sender);
+        uint256 unClaimNum = stakeInfos[msg.sender].unClaimNumber;
+        require(unClaimNum > 0, "unClaimNumber is 0");
+        console.log("-->> claimTokens unClaimNum:", unClaimNum);
+        stakeInfos[msg.sender].unClaimNumber = 0;
+        // 将收益代币esRNT分发给user
+        profitToken.mint(msg.sender, unClaimNum);
     }
 
     // 计算收益（未领取的质押数量，当前质押的收益）
-    function stakingIncome(StakeInfoStruct memory stakeInfo) public view returns (uint256 income) {
-        uint256 stakeTime = block.timestamp - stakeInfo.stakeStartTime;
-        return stakeInfo.stakeNumber * stakeTime * profitPerSeconds;
+    function updatestakingIncome(address account) public returns (uint256 unClaimNum) {
+        StakeInfoStruct memory stakeInfo = stakeInfos[account];
+        if (stakeInfo.stakeStartTime > 0) {
+            uint256 stakeTime = block.timestamp - stakeInfo.stakeStartTime;
+
+            stakeInfo.unClaimNumber += (stakeInfo.stakeNumber * stakeTime * profitRatePerday) / 1 days;
+            unClaimNum = stakeInfo.unClaimNumber;
+        }
+        stakeInfo.stakeStartTime = block.timestamp;
+
+        stakeInfos[account] = stakeInfo;
     }
 
-    modifier hadStaked() {
-        StakeInfoStruct memory stakeInfo = stakePools[msg.sender];
-        require(stakeInfo.stakeNumber > 0, "not stake");
-        _;
+    // 查询质押信息
+    // 外部为什么无法访问publicstakeInfos？答：结构体的可见性：StakeInfoStruct
+    function checkStakePools(address account) external returns (StakeInfoStruct memory) {
+        updatestakingIncome(account);
+        StakeInfoStruct memory stakeInfo = stakeInfos[account];
+        return stakeInfo;
     }
 }
 
 /**
- * 与用户的交互：
- * 1、用户质押； --> 可追加
- * 2、用户点领取；--> esRNT 到用户 EOA账户；同时在合约上 记录一个【兑换订单】(产生时间)
- * 3、用户点兑换。--> 用户在合约上点【兑换订单】，根据时长条件，消耗esRNT生成对应比例的RNT
+ * 要求：esRNT代币要发到用户手上，锁仓(记录锁仓时间，和兑换RNT比例相关)，用户要可兑换RNT
+ * 与用户的交互：质押RNT挖矿esRNT，esRNT仅用于兑换RNT
+ * 0、项目方分配挖矿esRNT可兑换代币RNT数 --> 分配RNT到esRNT合约
+ * 1、用户质押【在StakePool上执行】； --> 可追加，可提取（部份）
+ * 2、用户点领取【在StakePool上执行】；--> esRNT 到用户 EOA账户；同时在esRNT合约上 记录一个【兑换订单】(产生时间)
+ * 3、用户点兑换【在esRNT上执行】。--> 用户在合约上点【兑换订单】，根据时长条件，消耗esRNT生成对应比例的RNT
+ *
+ *  问题：esRNT是从哪里来的，如何到用户手上？
+ *  esRNT只有部署的owner才能mint，在StakePool中调用esRNT.mint会报错；
+ *  给esRNT合约增加admins，admin可以mint（将stakePool合约地址添加到admins）；
+ *
+ *  问题：esRNT上兑换的额RNT是哪里来的？
+ *  可以项目方通过mint，也可以项目方通过transfer，分配RNT到esRNT合约；
+ *
+ *  问题：还有没有其他的设计方式？
  */
