@@ -6,6 +6,9 @@ import "./PermitToken.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+
 // import {console} from "forge-std/Test.sol";
 
 struct NFTOrder {
@@ -17,6 +20,9 @@ struct NFTOrder {
 }
 
 contract NFTMarket is IERC721Receiver, IERC1363Receiver {
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
+
     uint256 public nftListIndex; // 订单编号
     mapping(uint256 => NFTOrder) public _nftList; // nft 订单
 
@@ -107,23 +113,32 @@ contract NFTMarket is IERC721Receiver, IERC1363Receiver {
         return NFTMarket.onTransferReceived.selector;
     }
 
-    function recordWhiteListUser(address user) external {
-        whiteListed[user] = true;
-    }
+    // function recordWhiteListUser(address user) external {
+    //     whiteListed[user] = true;
+    // }
 
     function permitBuy(
         uint256 listIndex,
-        address buyer,
-        address spender,
+        // address buyer,
+        // address spender,
         uint256 amount,
         uint256 deadline,
         uint8 v,
         bytes32 r,
-        bytes32 s
-    ) external payable {
-        require(whiteListed[buyer], "buyer is not whitelist user");
-        require(buyer == msg.sender, "is not owner");
-        require(spender == address(this), "spender is no the bank contract");
+        bytes32 s,
+        bytes memory whiteListSignature
+    ) external {
+        // "stack too deep" 错误通常发生在函数中的局部变量数量超过了 EVM 的限制。这可能是由于传递给函数的参数过多或使用了太多局部变量
+        // require(whiteListed[buyer], "buyer is not whitelist user");
+
+        // require(buyer == msg.sender, "is not owner");
+        // require(spender == address(this), "spender is no the bank contract");
+
+        // 验证白名单签名
+        bytes32 msgHash = keccak256(abi.encodePacked(msg.sender));
+        bytes32 ethSignHash = msgHash.toEthSignedMessageHash();
+        address recovered = ECDSA.recover(ethSignHash, whiteListSignature);
+        require(recovered == msg.sender, "Invalid signature");
 
         require(listIndex <= nftListIndex, "invalid order index"); // 错误的订单
         NFTOrder memory order = _nftList[listIndex]; // 获取订单信息
@@ -136,12 +151,12 @@ contract NFTMarket is IERC721Receiver, IERC1363Receiver {
         PermitToken payToken = PermitToken(order.payToken);
 
         // 验签通过，并执行授权
-        payToken.permit(buyer, spender, amount, deadline, v, r, s);
+        payToken.permit(msg.sender, address(this), amount, deadline, v, r, s);
 
         // 执行授权转账：买家 --> 卖家
-        payToken.transferFrom(buyer, nftOwner, amount);
+        payToken.transferFrom(msg.sender, nftOwner, amount);
 
         // 将nft转到买家帐户
-        nft.safeTransferFrom(nftOwner, buyer, order.nftTokenId);
+        nft.safeTransferFrom(nftOwner, msg.sender, order.nftTokenId);
     }
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import "../src/NFTMarket.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
 
 contract NFTMarketTest is Test {
     NFTMarket public market;
@@ -134,16 +135,15 @@ contract NFTMarketTest is Test {
     }
 
     //---------------------- permit buy ----------------------
-    function testFail_permitBuyNotWhiteList() external {
-        user_permitBuy();
-    }
 
-    function test_permitBuy() external {
-        market.recordWhiteListUser(buyer);
-        user_permitBuy();
-    }
+    function test_permitBuy() public {
+        // 构建白名单签名
+        bytes32 msgHash = keccak256(abi.encodePacked(buyer));
+        bytes32 ethSignHash = MessageHashUtils.toEthSignedMessageHash(msgHash);
+        (uint8 w_v, bytes32 w_r, bytes32 w_s) = vm.sign(buyerPrivateKey, ethSignHash);
+        // 生成签名
+        bytes memory whiteListSignature = abi.encodePacked(w_r, w_s, w_v);
 
-    function user_permitBuy() public {
         uint256 nftTokenId = 1;
         uint256 payPrice = 100;
         uint256 deadline = block.timestamp + 3 hours;
@@ -163,7 +163,7 @@ contract NFTMarketTest is Test {
         bytes32 digest = moneyToken.getPermitDigest(buyer, address(market), payPrice, deadline);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(buyerPrivateKey, digest);
         // 市场进行购买
-        market.permitBuy(listIndex, buyer, address(market), payPrice, deadline, v, r, s);
+        market.permitBuy(listIndex, payPrice, deadline, v, r, s, whiteListSignature);
         // 查询nft的持有人
         address nftOwner = nftToken.ownerOf(nftTokenId);
         console.log("-->> tokenId: ", nftTokenId, " nftOwner:", nftOwner);

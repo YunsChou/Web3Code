@@ -94,3 +94,6 @@
 [submodule "D25-Security/CTF_Vault/lib/forge-std"]
 	path = D25-Security/CTF_Vault/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "D16-Create2~Permit2/MintInscription/lib/forge-std"]
+	path = D16-Create2~Permit2/MintInscription/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
