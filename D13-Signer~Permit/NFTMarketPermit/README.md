@@ -1,3 +1,6 @@
+"stack too deep" 错误通常发生在函数中的局部变量数量超过了 EVM 的限制
+可以在foundry.toml 中添加：via_ir = true
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
