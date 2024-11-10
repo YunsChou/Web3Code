@@ -7,7 +7,7 @@ const client = createPublicClient({
 });
 
 // 合约地址
-const contractAddress = '0xaaD4892271392d72419c38dCac8FDA74c92D4a18'; // 替换为您的合约地址
+const contractAddress = '0xd76a365ff888c25e68544e2d6405826692469e0e'; // 替换为您的合约地址
 const locksCount = 11; // 假设有 11 个锁
 
 // 每个 LockInfo 结构体占用 3 个存储槽

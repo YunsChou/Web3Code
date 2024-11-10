@@ -27,6 +27,8 @@ contract VaultExploiter is Test {
         vm.startPrank(palyer);
 
         // add your hacker code.
+        
+
 
         require(vault.isSolve(), "solved");
         vm.stopPrank();

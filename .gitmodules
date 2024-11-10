@@ -97,3 +97,15 @@
 [submodule "D16-Create2~Permit2/MintInscription/lib/forge-std"]
 	path = D16-Create2~Permit2/MintInscription/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "D24-OPTGas~MappingList～WhiteList～MultiCall/AirdopMerkleNFTMarket/lib/forge-std"]
+	path = D24-OPTGas~MappingList～WhiteList～MultiCall/AirdopMerkleNFTMarket/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D16-Create2~Permit2/MintInscription/lib/openzeppelin-contracts"]
+	path = D16-Create2~Permit2/MintInscription/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "D16-Create2~Permit2～EIP1167/MintInscription/lib/openzeppelin-contracts"]
+	path = D16-Create2~Permit2～EIP1167/MintInscription/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "D16-Create2~Permit2～EIP1167/BankPermit2/lib/openzeppelin-contracts"]
+	path = D16-Create2~Permit2～EIP1167/BankPermit2/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
