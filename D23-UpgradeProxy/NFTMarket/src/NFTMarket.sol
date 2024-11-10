@@ -65,7 +65,7 @@ contract NFTMarket is IERC1363Receiver {
 
         IERC20(order.payToken).transferFrom(msg.sender, order.seller, order.payPrice);
         IERC721(order.nftToken).safeTransferFrom(order.seller, msg.sender, order.nftTokenId);
-
+    
         emit NFTSold(msg.sender, order.nftToken, order.nftTokenId, order.payToken, order.payPrice);
         delete nftLists[index];
     }
