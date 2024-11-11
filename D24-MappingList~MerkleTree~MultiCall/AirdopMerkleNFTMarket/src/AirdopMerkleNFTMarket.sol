@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "./MultiCall.sol";
 
 import "./ERC20Token.sol";
 import "./NFToken.sol";
 
-contract AirdopMerkleNFTMarket is Multicall {
+contract AirdopMerkleNFTMarket is MultiCall {
     struct NFTOrder {
         address owner;
         uint256 tokenId;
@@ -40,10 +40,14 @@ contract AirdopMerkleNFTMarket is Multicall {
     }
 
     // 使用calldata方式
-    function permitPrePayAndClaimNFT(bytes32[] calldata calls) external {}
+    function permitPrePayAndClaimNFT(bytes[] calldata datas) external returns (bytes[] memory) {
+        return multiDelegateCall(datas);
+    }
 
+    // -------------------------常规调用验证-------------------------
     // token Permit授权
     function permitPrePay(uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+        console.log("-->> permitPrePay: %s", value);
         token.permit(msg.sender, address(this), value, deadline, v, r, s);
         // token.transferFrom(owner, address(this), value);
     }

@@ -5,11 +5,13 @@ import {Test, console} from "forge-std/Test.sol";
 import "../src/AirdopMerkleNFTMarket.sol";
 import "../src/ERC20Token.sol";
 import "../src/NFToken.sol";
+import "../src/MultiCall.sol";
 
 contract AirdopMerkleNFTMarketTest is Test {
     AirdopMerkleNFTMarket public market;
     ERC20Token public token;
     NFToken public nft;
+    // MultiCall public multicall;
 
     uint256 public buyerPk = 0x123;
     // 模拟生成merkle tree的4个地址
@@ -44,6 +46,7 @@ contract AirdopMerkleNFTMarketTest is Test {
         token = new ERC20Token();
         nft = new NFToken();
         market = new AirdopMerkleNFTMarket(address(token), address(nft), merkleRoot);
+        // multicall = new MultiCall();
 
         console.log("buyer", buyer);
         console.log("seller", seller);
@@ -75,6 +78,49 @@ contract AirdopMerkleNFTMarketTest is Test {
         assertEq(price, 100);
     }
 
+    // 使用calldata方式
+    function test_callPermitPrePayAndClaimNFT() external {
+        // 模拟buyer授权额度(permit授权)
+        uint256 deadline = block.timestamp + 1 days;
+        uint256 value = 100;
+        // 模拟permit签名消息
+        bytes32 digest = token.getPermitDigest(buyer, address(market), value, deadline);
+        // 模拟签名
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(buyerPk, digest);
+
+        // 模拟seller挂单
+        vm.startPrank(seller);
+        nft.approve(address(market), 1);
+        market.listNFT(1, 100);
+        vm.stopPrank();
+
+        // 构建calldatas
+        bytes[] memory calldatas = new bytes[](2);
+        calldatas[0] = getPermitPrePayData(value, deadline, v, r, s);
+        calldatas[1] = getClaimNFTData(0);
+        // 调用multiDelegateCall执行
+        vm.prank(buyer);
+        // market.permitPrePay(value, deadline, v, r, s);
+        // bytes[] memory results = market.multiDelegateCall(calldatas);
+        market.permitPrePayAndClaimNFT(calldatas);
+        // console.logBytes(results);
+    }
+
+    function getPermitPrePayData(uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSignature("permitPrePay(uint256,uint256,uint8,bytes32,bytes32)", value, deadline, v, r, s);
+        // return abi.encodeWithSelector(AirdopMerkleNFTMarket.permitPrePay.selector, value, deadline, v, r, s);
+    }
+
+    // 通过merkle tree验证白名单，进行交易
+    function getClaimNFTData(uint256 orderIndex) public view returns (bytes memory) {
+        return abi.encodeWithSelector(AirdopMerkleNFTMarket.claimNFT.selector, orderIndex, proof);
+    }
+
+    // -------------------------常规调用验证-------------------------
     function test_permitPrePay() public {
         uint256 deadline = block.timestamp + 1 days;
         uint256 value = 100;
