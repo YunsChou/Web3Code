@@ -121,3 +121,9 @@
 [submodule "D24-MappingList~MerkleTree~MultiCall/AirdopMerkleNFTMarket/lib/openzeppelin-contracts"]
 	path = D24-MappingList~MerkleTree~MultiCall/AirdopMerkleNFTMarket/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "D24-MappingList~MerkleTree~MultiCall/TokenBank/lib/forge-std"]
+	path = D24-MappingList~MerkleTree~MultiCall/TokenBank/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "D24-MappingList~MerkleTree~MultiCall/TokenBankTop10/lib/forge-std"]
+	path = D24-MappingList~MerkleTree~MultiCall/TokenBankTop10/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

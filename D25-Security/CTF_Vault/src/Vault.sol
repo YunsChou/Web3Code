@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "forge-std/Test.sol";
+
 contract VaultLogic {
     address public owner;
     bytes32 private password;
 
     constructor(bytes32 _password) public {
+        console.logBytes32(_password);
         owner = msg.sender;
         password = _password;
     }
